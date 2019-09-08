@@ -1,0 +1,73 @@
+## Hey - your personal telegram notifier
+
+Set simple reminders and texts with an easy, approachable CLI
+
+STATUS - WIP - reminders don't work yet (but it isn't a biggie). Plan is to you use `at` daemon to schedule messages
+
+### Configuration
+
+Create a telegram BOT::
+. Create a telegram bot and send it a message
+    * search for BotFather
+    * type `/newbot`
+    * give it a friendly name and a bot name (bot name must end in _bot)
+    * Pick up the bot token from botfather.
+. Get a chat id
+    * Telegram global search, type your bot name or id
+    * type `/start`
+    * send any text.
+    * Run `curl https://api.telegram.org/bot$TOKEN/getUpdates`
+    +
+    [source,shell]
+    ----
+    {
+  "ok": true,
+  "result": [
+    {
+      "update_id": 519260759,
+      "message": {
+        "message_id": 2,
+        "from": {
+          "id": 535955002,
+          "is_bot": false,
+        },
+        "chat": {
+          "id": 123456789,
+          "type": "private"
+        },
+        "date": 1567922393,
+        "text": "hello"
+      }
+    }
+  ]
+}
+    ----
+    ```
+
+. Update the `config` file in the folder with the bot token and chat id
+
+
+### Using it
+
+[source,shell]
+----
+
+hey.py /t 10 AM Friday /m Get a hair cut
+
+----
+
+NOTE: arg parsing is basic - first arg has to be `/t` and then it scans forward till a `/m`. The gathered string is 
+parsed to a date. Anything after the /m is just concatenated to the message
+
+
+### Why
+
+. Dead simple
+. No server to run.
+. If you dont want to run this on your work machine, just set it up on a server someplace that has password-less ssh
+and setup a shell alias to execute on the server.
+
+### Dependencies
+
+. dateparser
+. requests
