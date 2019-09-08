@@ -1,0 +1,3 @@
+[default]
+BOT_TOKEN = token
+BOT_CHAT = chat_id
