@@ -64,8 +64,9 @@ parsed to a date. Anything after the /m is just concatenated to the message.
 
 . Dead simple
 . No server to run.
-. If you dont want to run this on your work machine, just set it up on a server someplace that has password-less ssh
-and setup a shell alias to execute on the server.
+. Telegram clients are available everywhere.
+But my machine isn't ONLINE always::
+. set it up on a server someplace configured with password-less ssh and setup a shell script to execute `hey` on the server.
 
 ### Dependencies
 
