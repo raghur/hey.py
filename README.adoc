@@ -2,8 +2,6 @@
 
 Set simple reminders and texts with an easy, approachable CLI
 
-STATUS - WIP - reminders don't work yet (but it isn't a biggie). Plan is to you use `at` daemon to schedule messages
-
 ### Configuration
 
 Create a telegram BOT::
@@ -45,6 +43,12 @@ Create a telegram BOT::
 
 . Update the `config` file in the folder with the bot token and chat id
 
+### Config file locations
+
+Files are read in the following sequence, later files override earlier entries defined in earlier ones.
+. Alongside `hey.py`, named as `config`
+. `/etc/hey.conf`
+. `~/.config/hey.conf`
 
 ### Using it
 
