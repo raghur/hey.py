@@ -17,9 +17,9 @@ Create a telegram BOT::
     * type `/start`
     * send any text.
     * Run `curl https://api.telegram.org/bot$TOKEN/getUpdates`
-    +
-    [source,shell]
-    ----
++
+[source,shell]
+----
     {
   "ok": true,
   "result": [
@@ -32,7 +32,7 @@ Create a telegram BOT::
           "is_bot": false,
         },
         "chat": {
-          "id": 123456789,
+          "id": 123456789, //<1> 
           "type": "private"
         },
         "date": 1567922393,
@@ -41,8 +41,7 @@ Create a telegram BOT::
     }
   ]
 }
-    ----
-    ```
+----
 
 . Update the `config` file in the folder with the bot token and chat id
 
@@ -56,8 +55,9 @@ hey.py /t 10 AM Friday /m Get a hair cut
 
 ----
 
-NOTE: arg parsing is basic - first arg has to be `/t` and then it scans forward till a `/m`. The gathered string is 
-parsed to a date. Anything after the /m is just concatenated to the message
+NOTE: arg parsing is basic and does not follow typical shell parsing conventions. 
+First arg has to be `/t` and then it scans forward till a `/m`. The gathered string is 
+parsed to a date. Anything after the /m is just concatenated to the message.
 
 
 ### Why
