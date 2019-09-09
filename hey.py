@@ -10,7 +10,7 @@ from urllib.parse import quote_plus, unquote_plus
 from dateparser import parse
 import requests
 
-LEVEL = logging.DEBUG
+LEVEL = logging.WARNING
 SETTINGS = {'PREFER_DATES_FROM': 'future'}
 FORMAT = ("%(asctime)s %(levelname)s (%(threadName)s) "
            "[%(name)s] %(message)s")
