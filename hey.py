@@ -2,16 +2,19 @@
 import sys
 import os
 import logging
-import requests
-from dateparser import parse
 import configparser
 import subprocess
 from datetime import datetime
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, unquote_plus
 
-SETTINGS = {"PREFER_DATES_FROM": 'future'}
-FORMAT = '%(asctime)-15s %(clientip)s %(user)-8s %(message)s'
-logging.basicConfig(format=FORMAT, level=logging.WARNING)
+from dateparser import parse
+import requests
+
+LEVEL = logging.DEBUG
+SETTINGS = {'PREFER_DATES_FROM': 'future'}
+FORMAT = ("%(asctime)s %(levelname)s (%(threadName)s) "
+           "[%(name)s] %(message)s")
+logging.basicConfig(format=FORMAT, level=LEVEL)
 
 def readConfig():
     config = configparser.ConfigParser()
@@ -28,7 +31,9 @@ def getMessageAndTime(args):
         while args[argi] != "/m":
             whenstr = whenstr + " " + args[argi]
             argi = argi + 1
-        when = parse(whenstr, settings=SETTINGS)
+        whenstr = whenstr.strip()
+        logging.debug(whenstr)
+        when = parse(whenstr, settings={'PREFER_DATES_FROM': 'future'})
         message = " ".join(args[argi + 1:])
         return (when, message)
     message = " ".join(args[1:])
@@ -43,10 +48,15 @@ def main(args):
     BOT_TOKEN = config["default"]["BOT_TOKEN"]
     BOT_CHAT = config["default"]["BOT_CHAT"]
     when, message = getMessageAndTime(args)
-    logging.debug(when, message)
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={BOT_CHAT}&text={message}"
-    logging.debug(url)
+    logging.debug("%s, %s", when, message)
     if not when:
+        unquoted = unquote_plus(message)
+        if 'Created:' in unquoted:
+            timestr = datetime.now().strftime("%I:%M %p")
+            # add current time to message
+            message = quote_plus(f"{timestr}: {unquoted}")
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={BOT_CHAT}&text={message}"
+        logging.debug(url)
         r = requests.post(url)
         logging.debug(r.text)
         return 0 # fix this based on http status
