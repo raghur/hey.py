@@ -6,6 +6,8 @@ import requests
 from dateparser import parse
 import configparser
 import subprocess
+from datetime import datetime
+from urllib.parse import quote_plus
 
 SETTINGS = {"PREFER_DATES_FROM": 'future'}
 FORMAT = '%(asctime)-15s %(clientip)s %(user)-8s %(message)s'
@@ -50,8 +52,10 @@ def main(args):
         return 0 # fix this based on http status
     else:
         timestr = when.strftime("%I:%M %p %Y-%m-%d")
+        nowstr = datetime.now().strftime("%a %I:%M %p %d %b %y")
+        qparam = quote_plus(f"{message} \r\nCreated: {nowstr}")
         status = subprocess.run(["at", timestr],
-                                input=f"{os.path.abspath(__file__)} {message}",
+                                input=f"{os.path.abspath(__file__)} {qparam}",
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 encoding="utf8")
