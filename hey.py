@@ -26,18 +26,37 @@ def readConfig():
 
 
 def getMessageAndTime(args):
-    if args[1] == '/t':
+    if args[1] == '/t' or args[1] == "-t":
         whenstr, argi = "", 2
-        while args[argi] != "/m":
+        while args[argi] != "/m" and args[argi] != '-m':
             whenstr = whenstr + " " + args[argi]
             argi = argi + 1
         whenstr = whenstr.strip()
         logging.debug(whenstr)
         when = parse(whenstr, settings={'PREFER_DATES_FROM': 'future'})
+        if not when:
+            raise ValueError(f"Could not parse time expression '{whenstr}'") 
+        if (when - datetime.now()).total_seconds() < 0:
+            # see https://github.com/scrapinghub/dateparser/issues/563
+            when = parse("in " + whenstr, settings={'PREFER_DATES_FROM': 'future'})
+            if not when:
+                raise ValueError(f"Could not parse time expression 'in {whenstr}'") 
+            if (when - datetime.now()).total_seconds() < 0:
+                raise ValueError(f"Parsing '{whenstr}' and 'in {whenstr}' did not yield a future date") 
         message = " ".join(args[argi + 1:])
         return (when, message)
     message = " ".join(args[1:])
     return (None, message)
+
+def printTimeExpressionHelp():
+    print ("Refer to https://dateparser.readthedocs.io/en/latest/ for documentation on date expressions")
+    print ("Additional tips:")
+    print ("in 10 minutes")
+    print ("in 1 month")
+    print ("next week")
+    print ("friday 10 AM")
+    print ("wed 10 AM")
+    print ("10 AM Tues")
 
 def main(args):
     """TODO: Docstring for main.
@@ -47,8 +66,14 @@ def main(args):
     config = readConfig()
     BOT_TOKEN = config["default"]["BOT_TOKEN"]
     BOT_CHAT = config["default"]["BOT_CHAT"]
-    when, message = getMessageAndTime(args)
-    logging.debug("%s, %s", when, message)
+    try:
+        when, message = getMessageAndTime(args)
+        logging.debug("%s, %s", when, message)
+    except ValueError as ve:
+        print(str(ve))
+        printTimeExpressionHelp()
+        return 1
+
     if not when:
         unquoted = unquote_plus(message)
         if 'Created:' in unquoted:
