@@ -49,20 +49,40 @@ def getMessageAndTime(args):
     return (None, message)
 
 def printTimeExpressionHelp():
-    print ("Refer to https://dateparser.readthedocs.io/en/latest/ for documentation on date expressions")
-    print ("Additional tips:")
-    print ("in 10 minutes")
-    print ("in 1 month")
-    print ("next week")
-    print ("friday 10 AM")
-    print ("wed 10 AM")
-    print ("10 AM Tues")
+    print("""Time expression examples:
+    in 10 minutes
+    in 1 month
+    next week
+    friday 10 AM
+    wed 10 AM
+    10 AM Tues
+Refer to https://dateparser.readthedocs.io/en/latest/ for documentation on date
+expressions""")
+
+def printUsage(progName):
+    print(f"""Summary: quick and simple cli reminder tool
+Usage: {progName} [-t timestring] [[-m] message]
+
+Examples:
+{progName} -t 10 mins -m everything here is strung together
+    Quotes are only required if your message includes quotes. If not, you can
+    just string your message together.
+
+{progName} without args we will send the message right away
+    Without any options, the arg list is considered the message and sent 
+    immediately.""")
+    print()
+    printTimeExpressionHelp()
+    pass
 
 def main(args):
     """TODO: Docstring for main.
     :returns: TODO
 
     """
+    if len(args) == 1:
+        printUsage(args[0])
+        return 1
     config = readConfig()
     BOT_TOKEN = config["default"]["BOT_TOKEN"]
     BOT_CHAT = config["default"]["BOT_CHAT"]
