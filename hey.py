@@ -103,8 +103,11 @@ def main(args):
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={BOT_CHAT}&text={message}"
         logging.debug(url)
         r = requests.post(url)
-        logging.debug(r.text)
-        return 0 # fix this based on http status
+        logging.debug(r.json())
+        if r.json()["ok"]:
+            return 0
+        logging.error("Error sending telegram req - %s", r.json())
+        return 1
     else:
         timestr = when.strftime("%I:%M %p %Y-%m-%d")
         nowstr = datetime.now().strftime("%a %I:%M %p %d %b %y")
