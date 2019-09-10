@@ -95,4 +95,18 @@ NOTE: arg parsing is basic and does not follow typical shell parsing conventions
 First arg has to be `/t` and then it scans forward till a `/m`. The gathered string is 
 parsed to a date. Anything after the /m is just concatenated to the message.
 
+## Time expressions
 
+[source,shell]
+----
+Time expression examples:
+    in 10 minutes
+    in 1 month
+    next week
+    friday 10 AM
+    wed 10 AM
+    10 AM Tues
+Refer to https://dateparser.readthedocs.io/en/latest/ for documentation on date
+expressions
+
+----
