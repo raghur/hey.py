@@ -1,6 +1,38 @@
 ## Hey - your personal telegram notifier
 
-Set simple reminders and texts with an easy, approachable CLI
+Set simple reminders and texts with an easy, approachable CLI with notifications on all your devices
+
+### Why
+
+. Dead simple - all of 130 lines in a single script file
+. No server process to run. Uses `st` daemon and most likely that's already running
+. Telegram clients are available for pretty much every platform
+But my machine isn't ONLINE 24x7::
+. Install it on a server and with password-less ssh and setup a shell script or alias to execute `hey` on the server.
+
+### Installation
+
+[source,shell]
+----
+# clone the repo
+# cd into the folder
+sudo pip3 install -r requirements.txt
+
+# check if at daemon is enabled & running
+sudo systemctl status atd
+
+# Enable and start it if needed.
+sudo systemctl enable atd
+sudo systemctl start atd
+
+# link file hey.py as convenient
+ln -sf /path/to/clone/hey.py ~/bin/hey
+
+----
+
+That's about it for installation
+You'll need to configure a telegram bot 
+before you can get started. See the section below
 
 ### Configuration
 
@@ -64,15 +96,3 @@ First arg has to be `/t` and then it scans forward till a `/m`. The gathered str
 parsed to a date. Anything after the /m is just concatenated to the message.
 
 
-### Why
-
-. Dead simple
-. No server to run.
-. Telegram clients are available everywhere.
-But my machine isn't ONLINE always::
-. set it up on a server someplace configured with password-less ssh and setup a shell script to execute `hey` on the server.
-
-### Dependencies
-
-. dateparser
-. requests
