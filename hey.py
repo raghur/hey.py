@@ -35,14 +35,14 @@ def getMessageAndTime(args):
         logging.debug(whenstr)
         when = parse(whenstr, settings={'PREFER_DATES_FROM': 'future'})
         if not when:
-            raise ValueError(f"Could not parse time expression '{whenstr}'") 
+            raise ValueError("Could not parse time expression '{}'".format(whenstr)) 
         if (when - datetime.now()).total_seconds() < 0:
             # see https://github.com/scrapinghub/dateparser/issues/563
             when = parse("in " + whenstr, settings={'PREFER_DATES_FROM': 'future'})
             if not when:
-                raise ValueError(f"Could not parse time expression 'in {whenstr}'") 
+                raise ValueError("Could not parse time expression 'in {}'".format(whenstr)) 
             if (when - datetime.now()).total_seconds() < 0:
-                raise ValueError(f"Parsing '{whenstr}' and 'in {whenstr}' did not yield a future date") 
+                raise ValueError("Parsing '{0}' and 'in {0}' did not yield a future date".format(whenstr)) 
         message = " ".join(args[argi + 1:])
         return (when, message)
     message = " ".join(args[1:])
@@ -60,17 +60,17 @@ Refer to https://dateparser.readthedocs.io/en/latest/ for documentation on date
 expressions""")
 
 def printUsage(progName):
-    print(f"""Summary: quick and simple cli reminder tool
-Usage: {progName} [-t timestring] [[-m] message]
+    print("""Summary: quick and simple cli reminder tool
+Usage: {0} [-t timestring] [[-m] message]
 
 Examples:
-{progName} -t 10 mins -m everything here is strung together
+{0} -t 10 mins -m everything here is strung together
     Quotes are only required if your message includes quotes. If not, you can
     just string your message together.
 
-{progName} without args we will send the message right away
+{0} without args we will send the message right away
     Without any options, the arg list is considered the message and sent 
-    immediately.""")
+    immediately.""".format(progName))
     print()
     printTimeExpressionHelp()
     pass
@@ -99,8 +99,8 @@ def main(args):
         if 'Created:' in unquoted:
             timestr = datetime.now().strftime("%I:%M %p")
             # add current time to message
-            message = quote_plus(f"{timestr}: {unquoted}")
-        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={BOT_CHAT}&text={message}"
+            message = quote_plus("{}: {}".format(timestr, unquoted))
+        url = "https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}".format(BOT_TOKEN, BOT_CHAT, message)
         logging.debug(url)
         r = requests.post(url)
         logging.debug(r.json())
@@ -111,14 +111,13 @@ def main(args):
     else:
         timestr = when.strftime("%I:%M %p %Y-%m-%d")
         nowstr = datetime.now().strftime("%a %I:%M %p %d %b %y")
-        qparam = quote_plus(f"{message} \r\nCreated: {nowstr}")
+        qparam = quote_plus("{} \r\nCreated: {}".format(message, nowstr))
         status = subprocess.run(["at", timestr],
-                                input=f"{os.path.abspath(__file__)} {qparam}",
+                                input=bytes("{} {}".format(os.path.abspath(__file__), qparam), "utf8"),
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                encoding="utf8")
+                                stderr=subprocess.PIPE)
         if status.returncode == 0:
-            print(f"reminder '{message}' set for {timestr}")
+            print("reminder '{}' set for {}".format(message, timestr))
             return 0
         else:
             print("Setting reminder with at failed. Here's the output of at")
