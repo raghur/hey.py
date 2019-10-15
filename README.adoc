@@ -26,7 +26,7 @@ sudo systemctl enable atd
 sudo systemctl start atd
 
 # link file hey.py as convenient
-ln -sf /path/to/clone/hey.py ~/bin/hey
+sudo ln -sf /path/to/clone/hey.py /usr/bin/hey
 
 ----
 
@@ -74,6 +74,16 @@ Create a telegram BOT::
 ----
 
 . Update the `config` file in the folder with the bot token and chat id
+
+### Timezone
+
+In case you run this on a server that's on UTC (As with most cloud providers),
+then set the `TIMEZONE=<Tz code>` to set the timezone of the _client_ machine.
+
+*NOTE* Once again,  this isn't the server timezone.  If your client and server
+are in the same timezone, then DO NOT specify the timezone (key should not
+present)
+
 
 ### Config file locations
 

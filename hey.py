@@ -35,14 +35,14 @@ def getMessageAndTime(args):
             argi = argi + 1
         whenstr = whenstr.strip()
         logging.debug(whenstr)
-        when = parse(whenstr, settings={'PREFER_DATES_FROM': 'future'})
+        when = parse(whenstr, settings=SETTINGS)
         if not when:
             raise ValueError(
                 "Could not parse time expression '{}'".format(whenstr))
         if (when - datetime.now()).total_seconds() < 0:
             # see https://github.com/scrapinghub/dateparser/issues/563
             when = parse("in " + whenstr,
-                         settings={'PREFER_DATES_FROM': 'future'})
+                         settings=SETTINGS)
             if not when:
                 raise ValueError(
                     "Could not parse time expression 'in {}'".format(whenstr))
@@ -96,6 +96,9 @@ def main(args):
     config = readConfig()
     BOT_TOKEN = config["default"]["BOT_TOKEN"]
     BOT_CHAT = config["default"]["BOT_CHAT"]
+    if "TIMEZONE" in config["default"]:
+        SETTINGS["TIMEZONE"] = config["default"]["TIMEZONE"]
+        SETTINGS["TO_TIMEZONE"] = "UTC"
     try:
         when, message = getMessageAndTime(args)
         logging.debug("%s, %s", when, message)
