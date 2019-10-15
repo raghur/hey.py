@@ -13,12 +13,14 @@ import requests
 LEVEL = logging.WARNING
 SETTINGS = {'PREFER_DATES_FROM': 'future'}
 FORMAT = ("%(asctime)s %(levelname)s (%(threadName)s) "
-           "[%(name)s] %(message)s")
+          "[%(name)s] %(message)s")
 logging.basicConfig(format=FORMAT, level=LEVEL)
+
 
 def readConfig():
     config = configparser.ConfigParser()
-    config_path1 = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'config')
+    config_path1 = os.path.join(os.path.abspath(
+        os.path.dirname(__file__)), 'config')
     config_path2 = "/etc/hey.conf"
     config_path3 = os.path.expanduser("~/.config/hey.conf")
     config.read([config_path1, config_path2, config_path3])
@@ -35,18 +37,24 @@ def getMessageAndTime(args):
         logging.debug(whenstr)
         when = parse(whenstr, settings={'PREFER_DATES_FROM': 'future'})
         if not when:
-            raise ValueError("Could not parse time expression '{}'".format(whenstr)) 
+            raise ValueError(
+                "Could not parse time expression '{}'".format(whenstr))
         if (when - datetime.now()).total_seconds() < 0:
             # see https://github.com/scrapinghub/dateparser/issues/563
-            when = parse("in " + whenstr, settings={'PREFER_DATES_FROM': 'future'})
+            when = parse("in " + whenstr,
+                         settings={'PREFER_DATES_FROM': 'future'})
             if not when:
-                raise ValueError("Could not parse time expression 'in {}'".format(whenstr)) 
+                raise ValueError(
+                    "Could not parse time expression 'in {}'".format(whenstr))
             if (when - datetime.now()).total_seconds() < 0:
-                raise ValueError("Parsing '{0}' and 'in {0}' did not yield a future date".format(whenstr)) 
+                raise ValueError(
+                    "Parsing '{0}' and 'in {0}' did not yield a future date"
+                    .format(whenstr))
         message = " ".join(args[argi + 1:])
         return (when, message)
     message = " ".join(args[1:])
     return (None, message)
+
 
 def printTimeExpressionHelp():
     print("""Time expression examples:
@@ -59,6 +67,7 @@ def printTimeExpressionHelp():
 Refer to https://dateparser.readthedocs.io/en/latest/ for documentation on date
 expressions""")
 
+
 def printUsage(progName):
     print("""Summary: quick and simple cli reminder tool
 Usage: {0} [-t timestring] [[-m] message]
@@ -69,11 +78,12 @@ Examples:
     just string your message together.
 
 {0} without args we will send the message right away
-    Without any options, the arg list is considered the message and sent 
+    Without any options, the arg list is considered the message and sent
     immediately.""".format(progName))
     print()
     printTimeExpressionHelp()
     pass
+
 
 def main(args):
     """TODO: Docstring for main.
@@ -100,7 +110,8 @@ def main(args):
             timestr = datetime.now().strftime("%I:%M %p")
             # add current time to message
             message = quote_plus("{}: {}".format(timestr, unquoted))
-        url = "https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}".format(BOT_TOKEN, BOT_CHAT, message)
+        url = ("https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}"
+               .format(BOT_TOKEN, BOT_CHAT, message))
         logging.debug(url)
         r = requests.post(url)
         logging.debug(r.json())
@@ -112,8 +123,10 @@ def main(args):
         timestr = when.strftime("%I:%M %p %Y-%m-%d")
         nowstr = datetime.now().strftime("%a %I:%M %p %d %b %y")
         qparam = quote_plus("{} \r\nCreated: {}".format(message, nowstr))
+        input = bytes("{} {}".format(
+            os.path.abspath(__file__), qparam), "utf8")
         status = subprocess.run(["at", timestr],
-                                input=bytes("{} {}".format(os.path.abspath(__file__), qparam), "utf8"),
+                                input=input,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         if status.returncode == 0:
@@ -124,6 +137,7 @@ def main(args):
             print(status.stdout)
             print(status.stderr)
             return 1
+
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
