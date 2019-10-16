@@ -40,14 +40,14 @@ def getMessageAndTime(args):
         if not when:
             raise ValueError(
                 "Could not parse time expression '{}'".format(whenstr))
-        if (when - datetime.now()).total_seconds() < 0:
+        if (when - getLocalizedDate()).total_seconds() < 0:
             # see https://github.com/scrapinghub/dateparser/issues/563
             when = parse("in " + whenstr,
                          settings=SETTINGS)
             if not when:
                 raise ValueError(
                     "Could not parse time expression 'in {}'".format(whenstr))
-            if (when - datetime.now()).total_seconds() < 0:
+            if (when - getLocalizedDate()).total_seconds() < 0:
                 raise ValueError(
                     "Parsing '{0}' and 'in {0}' did not yield a future date"
                     .format(whenstr))
