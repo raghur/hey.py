@@ -1,12 +1,14 @@
 ## Hey - your personal telegram notifier
 
-Set simple reminders and texts with an easy, approachable CLI with notifications on all your devices
+Set simple one-shot reminders and texts with an easy, approachable CLI with notifications on all your devices
 
 ### Why
 
 . Dead simple - all of 130 lines in a single script file
-. No server process to run. Uses `st` daemon and most likely that's already running
+. No server process to run. Uses `atd` daemon and most likely that's already running
 . Telegram clients are available for pretty much every platform
+. Handles fuzzy, human friendly dates and times (like `friday after next`); Handles timezone conversions as well (so `9AM EST`)
+
 But my machine isn't ONLINE 24x7::
 . Install it on a server and with password-less ssh and setup a shell script or alias to execute `hey` on the server.
 
@@ -84,6 +86,8 @@ then set the `TIMEZONE=<Tz code>` to set the timezone of the _client_ machine.
 are in the same timezone, then DO NOT specify the timezone (key should not
 present)
 
+*NOTE 2*: Timezone code is one of TZ database names, like so - `TIMEZONE=Asia/Kolkata`
+see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones[TZ Database]
 
 ### Config file locations
 
@@ -92,13 +96,19 @@ Files are read in the following sequence, later files override earlier entries d
 . `/etc/hey.conf`
 . `~/.config/hey.conf`
 
-### Using it
+### Usage
 
 [source,shell]
 ----
 
-hey.py /t 10 AM Friday /m Get a hair cut
+> hey.py /t 10 AM Friday /m Get a hair cut
 
+
+# My local timezone is India (IST, +0530), hey is on a server on UTC
+# and you can have tz info in the string - say some office opens at 9 AM EST
+
+> hey.py -t 9 AM EST -m call customer support
+reminder 'call customer support' set for 10:30 PM 2019-10-16
 ----
 
 NOTE: arg parsing is basic and does not follow typical shell parsing conventions. 
