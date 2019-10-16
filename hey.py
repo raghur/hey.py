@@ -6,6 +6,7 @@ import configparser
 import subprocess
 from datetime import datetime
 from urllib.parse import quote_plus, unquote_plus
+import pytz
 
 from dateparser import parse
 import requests
@@ -85,6 +86,14 @@ Examples:
     pass
 
 
+def getLocalizedDate(date=None):
+    if date is None:
+        date = datetime.now()
+    if "TIMEZONE" not in SETTINGS:
+        return date
+    return date.astimezone(pytz.timezone(SETTINGS["TIMEZONE"]))
+
+
 def main(args):
     """TODO: Docstring for main.
     :returns: TODO
@@ -110,7 +119,7 @@ def main(args):
     if not when:
         unquoted = unquote_plus(message)
         if 'Created:' in unquoted:
-            timestr = datetime.now().strftime("%I:%M %p")
+            timestr = getLocalizedDate().strftime("%I:%M %p")
             # add current time to message
             message = quote_plus("{}: {}".format(timestr, unquoted))
         url = ("https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}"
@@ -124,7 +133,7 @@ def main(args):
         return 1
     else:
         timestr = when.strftime("%I:%M %p %Y-%m-%d")
-        nowstr = datetime.now().strftime("%a %I:%M %p %d %b %y")
+        nowstr = getLocalizedDate().strftime("%a %I:%M %p %d %b %y")
         qparam = quote_plus("{} \r\nCreated: {}".format(message, nowstr))
         input = bytes("{} {}".format(
             os.path.abspath(__file__), qparam), "utf8")
@@ -133,6 +142,7 @@ def main(args):
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         if status.returncode == 0:
+            timestr = getLocalizedDate(when).strftime("%I:%M %p %Y-%m-%d")
             print("reminder '{}' set for {}".format(message, timestr))
             return 0
         else:
