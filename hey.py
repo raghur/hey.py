@@ -28,6 +28,10 @@ def readConfig():
     return config
 
 
+def isInThePast(when):
+    return (getLocalizedDate(when) - getLocalizedDate()).total_seconds() < 0
+
+
 def getMessageAndTime(args):
     if args[1] == '/t' or args[1] == "-t":
         whenstr, argi = "", 2
@@ -40,14 +44,14 @@ def getMessageAndTime(args):
         if not when:
             raise ValueError(
                 "Could not parse time expression '{}'".format(whenstr))
-        if (when - getLocalizedDate()).total_seconds() < 0:
+        if isInThePast(when):
             # see https://github.com/scrapinghub/dateparser/issues/563
             when = parse("in " + whenstr,
                          settings=SETTINGS)
             if not when:
                 raise ValueError(
                     "Could not parse time expression 'in {}'".format(whenstr))
-            if (when - getLocalizedDate()).total_seconds() < 0:
+            if isInThePast(when):
                 raise ValueError(
                     "Parsing '{0}' and 'in {0}' did not yield a future date"
                     .format(whenstr))
