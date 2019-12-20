@@ -12,7 +12,7 @@ from dateparser import parse
 import argparse
 import requests
 
-LEVEL = logging.WARNING
+LEVEL = logging.DEBUG
 SETTINGS = {'PREFER_DATES_FROM': 'future'}
 FORMAT = ("%(asctime)s %(levelname)s (%(threadName)s) "
           "[%(name)s] %(message)s")
@@ -52,19 +52,6 @@ def parseTime(whenstr):
     return when
 
 
-def getMessageAndTime(args):
-    if args[1] == '/t' or args[1] == "-t":
-        whenstr, argi = "", 2
-        while args[argi] != "/m" and args[argi] != '-m':
-            whenstr = whenstr + " " + args[argi]
-            argi = argi + 1
-        when = parseTime(whenstr)
-        message = " ".join(args[argi + 1:])
-        return (when, message)
-    message = " ".join(args[1:])
-    return (None, message)
-
-
 def printTimeExpressionHelp():
     print("""Time expression examples:
     in 10 minutes
@@ -76,22 +63,6 @@ def printTimeExpressionHelp():
 Refer to https://dateparser.readthedocs.io/en/latest/ for documentation on date
 expressions""")
 
-
-def printUsage(progName):
-    print("""Summary: quick and simple cli reminder tool
-Usage: {0} [-t timestring] [[-m] message]
-
-Examples:
-{0} -t 10 mins -m everything here is strung together
-    Quotes are only required if your message includes quotes. If not, you can
-    just string your message together.
-
-{0} without args we will send the message right away
-    Without any options, the arg list is considered the message and sent
-    immediately.""".format(progName))
-    print()
-    printTimeExpressionHelp()
-    pass
 
 def parseArgs(args):
     parser = argparse.ArgumentParser()
@@ -119,9 +90,9 @@ yly  - yearly
     if parsedArgs.time:
         when = parseTime(" ".join(parsedArgs.time))
         parsedArgs.time = when
+    parsedArgs.msg = " ".join(parsedArgs.msg)
     return parsedArgs
 
-    
 
 def getLocalizedDate(date=None):
     if date is None:
@@ -136,12 +107,8 @@ def main(args):
     :returns: TODO
 
     """
-    args = parseArgs(args)
-    print(args)
-    sys.exit(1)
-    if len(args) == 1:
-        printUsage(args[0])
-        return 1
+    parsedArgs = parseArgs(args)
+    logging.debug(args)
     config = readConfig()
     BOT_TOKEN = config["default"]["BOT_TOKEN"]
     BOT_CHAT = config["default"]["BOT_CHAT"]
@@ -149,13 +116,14 @@ def main(args):
         SETTINGS["TIMEZONE"] = config["default"]["TIMEZONE"]
         SETTINGS["TO_TIMEZONE"] = "UTC"
     try:
-        when, message = getMessageAndTime(args)
+        when, message = (parsedArgs.time, parsedArgs.msg)
         logging.debug("%s, %s", when, message)
     except ValueError as ve:
         print(str(ve))
         printTimeExpressionHelp()
         return 1
 
+    # sys.exit(1)
     if not when:
         unquoted = unquote_plus(message)
         if 'Created:' in unquoted:
@@ -177,6 +145,7 @@ def main(args):
         qparam = quote_plus("{} \r\nCreated: {}".format(message, nowstr))
         input = bytes("{} -m {}".format(
             os.path.abspath(__file__), qparam), "utf8")
+        logging.debug("Setting at call %s, %s", timestr, input)
         status = subprocess.run(["at", timestr],
                                 input=input,
                                 stdout=subprocess.PIPE,
