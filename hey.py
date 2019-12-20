@@ -9,6 +9,7 @@ from urllib.parse import quote_plus, unquote_plus
 import pytz
 
 from dateparser import parse
+import argparse
 import requests
 
 LEVEL = logging.WARNING
@@ -31,6 +32,25 @@ def readConfig():
 def isInThePast(when):
     return (getLocalizedDate(when) - getLocalizedDate()).total_seconds() < 0
 
+def parseTime(whenstr):
+    logging.debug(whenstr)
+    when = parse(whenstr.strip(), settings=SETTINGS)
+    if not when:
+        raise ValueError(
+            "Could not parse time expression '{}'".format(whenstr))
+    if isInThePast(when):
+        # see https://github.com/scrapinghub/dateparser/issues/563
+        when = parse("in " + whenstr,
+                     settings=SETTINGS)
+        if not when:
+            raise ValueError(
+                "Could not parse time expression 'in {}'".format(whenstr))
+        if isInThePast(when):
+            raise ValueError(
+                "Parsing '{0}' and 'in {0}' did not yield a future date"
+                .format(whenstr))
+    return when
+
 
 def getMessageAndTime(args):
     if args[1] == '/t' or args[1] == "-t":
@@ -38,23 +58,7 @@ def getMessageAndTime(args):
         while args[argi] != "/m" and args[argi] != '-m':
             whenstr = whenstr + " " + args[argi]
             argi = argi + 1
-        whenstr = whenstr.strip()
-        logging.debug(whenstr)
-        when = parse(whenstr, settings=SETTINGS)
-        if not when:
-            raise ValueError(
-                "Could not parse time expression '{}'".format(whenstr))
-        if isInThePast(when):
-            # see https://github.com/scrapinghub/dateparser/issues/563
-            when = parse("in " + whenstr,
-                         settings=SETTINGS)
-            if not when:
-                raise ValueError(
-                    "Could not parse time expression 'in {}'".format(whenstr))
-            if isInThePast(when):
-                raise ValueError(
-                    "Parsing '{0}' and 'in {0}' did not yield a future date"
-                    .format(whenstr))
+        when = parseTime(whenstr)
         message = " ".join(args[argi + 1:])
         return (when, message)
     message = " ".join(args[1:])
@@ -89,6 +93,35 @@ Examples:
     printTimeExpressionHelp()
     pass
 
+def parseArgs(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-t", nargs="+", type=str, dest="time",
+                            help="word", metavar="WORD")
+    parser.add_argument("-m", nargs="+", type=str, dest="msg")
+    parser.add_argument("-r", dest="repeat", choices=["qh", "hh", "h", "d",
+                                                        "wk", "bw", "mly", "qly",
+                                                        "hly", "yly"],
+                        help="""Non functional
+qh   - 15 mins
+hh   - 30 mins
+h    - hourly
+d    - daily
+wk   - weekly
+bw   - bi weekly (2 weeks)
+mly  - monthly
+qly  - quarterly (3 months)
+hly  - half yearly
+yly  - yearly
+""")
+    parser.add_argument("-c", type=int, default=10, metavar="COUNT",
+                        help="Repeat count (Default: %(default)s)")
+    parsedArgs = parser.parse_args(args)
+    if parsedArgs.time:
+        when = parseTime(" ".join(parsedArgs.time))
+        parsedArgs.time = when
+    return parsedArgs
+
+    
 
 def getLocalizedDate(date=None):
     if date is None:
@@ -103,6 +136,9 @@ def main(args):
     :returns: TODO
 
     """
+    args = parseArgs(args)
+    print(args)
+    sys.exit(1)
     if len(args) == 1:
         printUsage(args[0])
         return 1
@@ -139,7 +175,7 @@ def main(args):
         timestr = when.strftime("%I:%M %p %Y-%m-%d")
         nowstr = getLocalizedDate().strftime("%a %I:%M %p %d %b %y")
         qparam = quote_plus("{} \r\nCreated: {}".format(message, nowstr))
-        input = bytes("{} {}".format(
+        input = bytes("{} -m {}".format(
             os.path.abspath(__file__), qparam), "utf8")
         status = subprocess.run(["at", timestr],
                                 input=input,
@@ -157,4 +193,4 @@ def main(args):
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    sys.exit(main(sys.argv[1:]))
