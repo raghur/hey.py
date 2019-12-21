@@ -12,13 +12,23 @@ from dateparser import parse
 import argparse
 import requests
 
-LEVEL = logging.DEBUG
+LEVEL = logging.INFO
 SETTINGS = {'PREFER_DATES_FROM': 'future'}
 FORMAT = ("%(asctime)s %(levelname)s (%(threadName)s) "
           "[%(name)s] %(message)s")
 logging.basicConfig(format=FORMAT, level=LEVEL)
 
-
+REPEAT_LOOKUP = {
+    "qh": "15m",
+    "hh": "30m",
+    "h": "in 1h",
+    "d": "in 1 day",
+    "wk": "in 1 week",
+    "bw": "in 2 weeks",
+    "mly": "in 1 month",
+    "hly": "in 6 months",
+    "yly": "in 1 year",
+}
 def readConfig():
     config = configparser.ConfigParser()
     config_path1 = os.path.join(os.path.abspath(
@@ -69,9 +79,7 @@ def parseArgs(args):
     parser.add_argument("-t", nargs="+", type=str, dest="time",
                             help="word", metavar="WORD")
     parser.add_argument("-m", nargs="+", type=str, dest="msg")
-    parser.add_argument("-r", dest="repeat", choices=["qh", "hh", "h", "d",
-                                                        "wk", "bw", "mly", "qly",
-                                                        "hly", "yly"],
+    parser.add_argument("-r", dest="repeatExpr", choices=REPEAT_LOOKUP.keys(),
                         help="""Non functional
 qh   - 15 mins
 hh   - 30 mins
@@ -127,6 +135,7 @@ def main(args):
 
     # sys.exit(1)
     if not when:
+        # only message content - just send
         unquoted = unquote_plus(message)
         if 'Created:' in unquoted:
             timestr = getLocalizedDate().strftime("%I:%M %p")
@@ -142,6 +151,7 @@ def main(args):
         logging.error("Error sending telegram req - %s", r.json())
         return 1
     else:
+        # has a time component
         timestr = when.strftime("%I:%M %p %Y-%m-%d")
         nowstr = getLocalizedDate().strftime("%a %I:%M %p %d %b %y")
         msg = "{} \r\nCreated: {}".format(message, nowstr)
@@ -156,8 +166,10 @@ def main(args):
             origCount = parsedArgs.count
             if parsedArgs.initial_repeat:
                 origCount = parsedArgs.initial_repeat
-            repeatCmd = "{} -m {} -c {} -o {}".format(os.path.abspath(__file__), msg, parsedArgs.count - 1,
+            whenExpr = REPEAT_LOOKUP[parsedArgs.repeatExpr]
+            repeatCmd = "{} -t {} -m {} -c {} -o {}".format(os.path.abspath(__file__), whenExpr, msg, parsedArgs.count - 1,
                                             origCount)
+            logging.debug("Repeat cmd: %s", repeatCmd)
             atcmd = "{} \r\n{}".format(atcmd, repeatCmd)
 
         input = bytes(atcmd, "utf8")
