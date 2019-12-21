@@ -84,8 +84,10 @@ qly  - quarterly (3 months)
 hly  - half yearly
 yly  - yearly
 """)
-    parser.add_argument("-c", type=int, default=10, metavar="COUNT",
+    parser.add_argument("-c", dest="count", type=int, default=10, metavar="COUNT",
                         help="Repeat count (Default: %(default)s)")
+    parser.add_argument("-o", dest="initial_repeat", type=int,
+                        help=argparse.SUPPRESS)
     parsedArgs = parser.parse_args(args)
     if parsedArgs.time:
         when = parseTime(" ".join(parsedArgs.time))
@@ -108,7 +110,7 @@ def main(args):
 
     """
     parsedArgs = parseArgs(args)
-    logging.debug(args)
+    logging.debug(parsedArgs)
     config = readConfig()
     BOT_TOKEN = config["default"]["BOT_TOKEN"]
     BOT_CHAT = config["default"]["BOT_CHAT"]
@@ -142,9 +144,23 @@ def main(args):
     else:
         timestr = when.strftime("%I:%M %p %Y-%m-%d")
         nowstr = getLocalizedDate().strftime("%a %I:%M %p %d %b %y")
-        qparam = quote_plus("{} \r\nCreated: {}".format(message, nowstr))
-        input = bytes("{} -m {}".format(
-            os.path.abspath(__file__), qparam), "utf8")
+        msg = "{} \r\nCreated: {}".format(message, nowstr)
+        if parsedArgs.count and parsedArgs.count == 1:
+            msg = "{} \r\n Original repeat was {} times".format(msg,
+                                                      parsedArgs.origCount)
+
+        qparam = quote_plus(msg)
+        atcmd = "{} -m {}".format(os.path.abspath(__file__), qparam)
+        if parsedArgs.count and parsedArgs.count > 0:
+            msg = message
+            origCount = parsedArgs.count
+            if parsedArgs.initial_repeat:
+                origCount = parsedArgs.initial_repeat
+            repeatCmd = "{} -m {} -c {} -o {}".format(os.path.abspath(__file__), msg, parsedArgs.count - 1,
+                                            origCount)
+            atcmd = "{} \r\n{}".format(atcmd, repeatCmd)
+
+        input = bytes(atcmd, "utf8")
         logging.debug("Setting at call %s, %s", timestr, input)
         status = subprocess.run(["at", timestr],
                                 input=input,
