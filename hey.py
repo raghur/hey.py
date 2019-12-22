@@ -85,8 +85,8 @@ def parseArgs(args):
     parser.add_argument("-t", nargs="+", type=str, dest="time",
                             help="word", metavar="WORD")
     parser.add_argument("-m", nargs="+", type=str, dest="msg")
-    parser.add_argument("-r", dest="repeatExpr", choices=REPEAT_LOOKUP.keys(),
-                        help="""Non functional
+    parser.add_argument("-r", dest="repeatExpr",
+                        help="""Repeat period
 qh   - 15 mins
 hh   - 30 mins
 h    - hourly
