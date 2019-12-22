@@ -12,7 +12,13 @@ from dateparser import parse
 import argparse
 import requests
 
+DEBUG=0
 LEVEL = logging.INFO
+SCRIPT=os.path.abspath(__file__)
+
+if DEBUG:
+    LEVEL = logging.DEBUG
+    SCRIPT = "logwrapper.sh {0}".format(SCRIPT)
 SETTINGS = {'PREFER_DATES_FROM': 'future'}
 FORMAT = ("%(asctime)s %(levelname)s (%(threadName)s) "
           "[%(name)s] %(message)s")
@@ -155,22 +161,24 @@ def main(args):
         timestr = when.strftime("%I:%M %p %Y-%m-%d")
         nowstr = getLocalizedDate().strftime("%a %I:%M %p %d %b %y")
         msg = "{} \r\nCreated: {}".format(message, nowstr)
-        if parsedArgs.count and parsedArgs.count == 1:
+        if parsedArgs.repeatExpr and parsedArgs.count == 1:
             msg = "{} \r\n Original repeat was {} times".format(msg,
-                                                      parsedArgs.origCount)
+                                                      parsedArgs.initial_repeat)
 
         qparam = quote_plus(msg)
-        atcmd = "{} -m {}".format(os.path.abspath(__file__), qparam)
-        if parsedArgs.count and parsedArgs.count > 0:
+        atcmd = "{} -m {}".format(SCRIPT, qparam)
+        if parsedArgs.repeatExpr and parsedArgs.count > 1:
             msg = message
             origCount = parsedArgs.count
             if parsedArgs.initial_repeat:
                 origCount = parsedArgs.initial_repeat
-            whenExpr = REPEAT_LOOKUP[parsedArgs.repeatExpr]
-            repeatCmd = "{} -t {} -m {} -c {} -o {}".format(os.path.abspath(__file__), whenExpr, msg, parsedArgs.count - 1,
-                                            origCount)
+            whenExpr = parsedArgs.repeatExpr
+            if parsedArgs.repeatExpr in REPEAT_LOOKUP:
+                whenExpr = REPEAT_LOOKUP[parsedArgs.repeatExpr]
+            repeatCmd = "{} -t {} -m {} -c {} -o {} -r {}".format(SCRIPT, whenExpr, msg, parsedArgs.count - 1,
+                                            origCount, parsedArgs.repeatExpr)
             logging.debug("Repeat cmd: %s", repeatCmd)
-            atcmd = "{} \r\n{}".format(atcmd, repeatCmd)
+            atcmd = "{}\n{}".format(atcmd, repeatCmd)
 
         input = bytes(atcmd, "utf8")
         logging.debug("Setting at call %s, %s", timestr, input)
