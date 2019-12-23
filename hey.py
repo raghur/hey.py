@@ -25,8 +25,6 @@ FORMAT = ("%(asctime)s %(levelname)s (%(threadName)s) "
 logging.basicConfig(format=FORMAT, level=LEVEL)
 
 REPEAT_LOOKUP = {
-    "qh": "15m",
-    "hh": "30m",
     "h": "in 1h",
     "d": "in 1 day",
     "wk": "in 1 week",
@@ -70,9 +68,10 @@ def parseTime(whenstr):
 
 def printTimeExpressionHelp():
     print("""Time expression examples:
-    in 10 minutes
-    in 1 month
-    next week
+    in 10 minutes/10min
+    in 1 month/1mo
+    15 days/15days
+    next week/3wk
     friday 10 AM
     wed 10 AM
     10 AM Tues
@@ -85,10 +84,9 @@ def parseArgs(args):
     parser.add_argument("-t", nargs="+", type=str, dest="time",
                             help="word", metavar="WORD")
     parser.add_argument("-m", nargs="+", type=str, dest="msg")
-    parser.add_argument("-r", dest="repeatExpr",
-                        help="""Repeat period
-qh   - 15 mins
-hh   - 30 mins
+    parser.add_argument("-r", nargs="+", type=str, dest="repeatExpr",
+                        help="""In the same format as the time expression -
+                        with the following additional shortcuts
 h    - hourly
 d    - daily
 wk   - weekly
@@ -103,10 +101,12 @@ yly  - yearly
     parser.add_argument("-o", dest="initial_repeat", type=int,
                         help=argparse.SUPPRESS)
     parsedArgs = parser.parse_args(args)
-    if parsedArgs.time:
-        when = parseTime(" ".join(parsedArgs.time))
-        parsedArgs.time = when
+    parsedArgs.time = parseTime(" ".join(parsedArgs.time)) if parsedArgs.time else None
+    rep = " ".join(parsedArgs.repeatExpr or [])
+    parsedArgs.repeatExpr = REPEAT_LOOKUP.get(rep, rep) if rep else None
     parsedArgs.msg = " ".join(parsedArgs.msg)
+
+    logging.debug(parsedArgs)
     return parsedArgs
 
 
@@ -124,7 +124,6 @@ def main(args):
 
     """
     parsedArgs = parseArgs(args)
-    logging.debug(parsedArgs)
     config = readConfig()
     BOT_TOKEN = config["default"]["BOT_TOKEN"]
     BOT_CHAT = config["default"]["BOT_CHAT"]
@@ -172,10 +171,8 @@ def main(args):
             origCount = parsedArgs.count
             if parsedArgs.initial_repeat:
                 origCount = parsedArgs.initial_repeat
-            whenExpr = parsedArgs.repeatExpr
-            if parsedArgs.repeatExpr in REPEAT_LOOKUP:
-                whenExpr = REPEAT_LOOKUP[parsedArgs.repeatExpr]
-            repeatCmd = "{} -t {} -m {} -c {} -o {} -r {}".format(SCRIPT, whenExpr, msg, parsedArgs.count - 1,
+            repeatCmd = "{} -t {} -m {} -c {} -o {} -r {}".format(SCRIPT,
+                                                                  parsedArgs.repeatExpr, msg, parsedArgs.count - 1,
                                             origCount, parsedArgs.repeatExpr)
             logging.debug("Repeat cmd: %s", repeatCmd)
             atcmd = "{}\n{}".format(atcmd, repeatCmd)
