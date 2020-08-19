@@ -7,6 +7,7 @@ import subprocess
 from datetime import datetime
 from urllib.parse import quote_plus, unquote_plus
 import pytz
+import re
 
 from dateparser import parse
 import argparse
@@ -78,6 +79,31 @@ def printTimeExpressionHelp():
 Refer to https://dateparser.readthedocs.io/en/latest/ for documentation on date
 expressions""")
 
+class ListJobsAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        try:
+            atq = subprocess.Popen(['at', '-l'], stdout=subprocess.PIPE)
+            sort = subprocess.Popen(['sort'], stdin=atq.stdout, stdout=subprocess.PIPE)
+            jobs = subprocess.check_output(("cut", "-f2"), stdin=sort.stdout, encoding='UTF-8')
+            jobs = str(jobs).splitlines()
+
+            atq = subprocess.Popen(['at', '-l'], stdout=subprocess.PIPE)
+            sort = subprocess.Popen(['sort'], stdin=atq.stdout, stdout=subprocess.PIPE)
+            cut = subprocess.Popen(("cut", "-f1"), stdin=sort.stdout, stdout=subprocess.PIPE)
+            xargs = subprocess.Popen(("xargs", "at", "-c"), stdin=cut.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            joblist = subprocess.check_output(("grep", "hey -m"), stdin=xargs.stdout, encoding='UTF-8')
+            jobdetail = unquote_plus(str(joblist)).splitlines()
+            # print(jobs)
+            # print(jobdetail)
+            for i,l in enumerate(jobs):
+                line = "{} {}".format(l, jobdetail[i*2])
+                line = re.sub(' a.*hey -m ', " ", line)
+                print(line)
+            sys.exit(0)
+        except subprocess.CalledProcessError as cpe:
+            if cpe.returncode == 1:
+                sys.exit(0)
+            sys.exit(cpe.returncode)
 
 def parseArgs(args):
     parser = argparse.ArgumentParser()
@@ -100,6 +126,7 @@ yly  - yearly
                         help="Repeat count (Default: %(default)s)")
     parser.add_argument("-o", dest="initial_repeat", type=int,
                         help=argparse.SUPPRESS)
+    parser.add_argument("-l", dest="list", nargs="?", const=True, action=ListJobsAction, help="List current job queue")
     parsedArgs = parser.parse_args(args)
     parsedArgs.time = parseTime(" ".join(parsedArgs.time)) if parsedArgs.time else None
     rep = " ".join(parsedArgs.repeatExpr or [])
