@@ -18,7 +18,8 @@ But my machine isn't ONLINE 24x7::
 ----
 # clone the repo
 # cd into the folder
-sudo pip3 install -r requirements.txt
+
+./install.sh
 
 # check if at daemon is enabled & running
 sudo systemctl status atd
@@ -26,9 +27,6 @@ sudo systemctl status atd
 # Enable and start it if needed.
 sudo systemctl enable atd
 sudo systemctl start atd
-
-# link file hey.py as convenient
-sudo ln -sf /path/to/clone/hey.py /usr/bin/hey
 
 ----
 
